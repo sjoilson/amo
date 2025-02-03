@@ -1,0 +1,64 @@
+import requests
+
+# URL da API do Zabbix
+url = 'https://monitoramento.stf.jus.br/api_jsonrpc.php'
+
+# Credenciais de login
+username = 'joilson.vieira_a'
+password = '#30csWD40*10'
+
+# Método de autenticação
+payload = {
+    'jsonrpc': '2.0',
+    'method': 'user.login',
+    'params': {
+        'user': username,
+        'password': password,
+    },
+    'id': 1,
+    'auth': None,
+}
+
+# Fazendo a solicitação de autenticação
+response = requests.post(url, json=payload)
+auth_result = response.json()
+
+# Obtendo o token de autenticação
+auth_token = auth_result['result']
+
+# Consulta para obter todos os grupos de hosts
+get_hostgroups_payload = {
+    'jsonrpc': '2.0',
+    'method': 'hostgroup.get',
+    'params': {
+        'output': 'extend',
+    },
+    'auth': auth_token,
+    'id': 1,
+}
+
+# Fazendo a solicitação para obter os grupos de hosts
+response = requests.post(url, json=get_hostgroups_payload)
+hostgroups_result = response.json()
+
+# Verificando se a solicitação foi bem-sucedida
+if 'result' in hostgroups_result:
+    # Salvando os nomes dos grupos de hosts em um arquivo de texto
+    with open('nomes_hostgroups.txt', 'w') as file:
+        for hostgroup in hostgroups_result['result']:
+            file.write(f"{hostgroup['name']}\n")
+    print("Nomes dos grupos de hosts salvos com sucesso em 'nomes_hostgroups.txt'")
+else:
+    print("Falha ao obter os grupos de hosts.")
+
+# Logout do usuário
+logout_payload = {
+    'jsonrpc': '2.0',
+    'method': 'user.logout',
+    'params': [],
+    'id': 1,
+    'auth': auth_token,
+}
+
+# Fazendo logout
+requests.post(url, json=logout_payload)
